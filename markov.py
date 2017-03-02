@@ -167,15 +167,19 @@ api = twitter.Api(consumer_key=os.environ['TWITTER_CONSUMER_KEY'],
 print api.VerifyCredentials()  # make sure we're authenticated
 print
 
+statuses = api.GetUserTimeline(screen_name='dummymarkovbot')
+print 'Most recent tweet:\n%s' % [s.text for s in statuses][0]
+print
+
 while True:
     # Try to make a successful status and tweet it
     try:
         tweet = make_tweet(input_path)
-        print 'Attempting to tweet: %s' % tweet
+        print 'Attempting to tweet:\n%s' % tweet
         print
 
         status = api.PostUpdate(tweet)
-        print 'Successfully tweeted: %s' % status.text
+        print 'Successfully tweeted:\n%s' % status.text
         print
 
         user_input = raw_input('Enter to tweet again [q to quit] > ').lower()
