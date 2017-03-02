@@ -1,6 +1,10 @@
 from random import choice
 import sys
 import string
+import twitter
+import os
+
+"""Makes random sentences from source material and tweets them."""
 
 
 def open_and_read_file(file_path):
@@ -131,10 +135,10 @@ def is_under_140(text):
     return len(text) < 140
 
 
-def make_tweet():
+def make_tweet(file_path):
     """Returns a Markov tweet."""
 
-    input_path = sys.argv[1]
+    input_path = file_path
     # Open the file and turn it into one long string
     input_text = open_and_read_file(input_path)
     # Get a Markov chain
@@ -150,15 +154,35 @@ def make_tweet():
             return tweet.rstrip()  # Do not include trailing space
 
 
-# Produce random text
-# tweet = make_tweet()
-
-# print tweet
-# print len(tweet)
-
 input_path = sys.argv[1]
 # Open the file and turn it into one long string
 input_text = open_and_read_file(input_path)
 # Get a Markov chain
-chains = make_chains(input_text, 2)
-print make_next_sentence('Would you could you with a fox?', chains)
+chains = make_chains(input_text)
+
+api = twitter.Api(consumer_key=os.environ['TWITTER_CONSUMER_KEY'],
+                  consumer_secret=os.environ['TWITTER_CONSUMER_SECRET'],
+                  access_token_key=os.environ['TWITTER_ACCESS_TOKEN_KEY'],
+                  access_token_secret=os.environ['TWITTER_ACCESS_TOKEN_SECRET'])
+print api.VerifyCredentials()  # make sure we're authenticated
+print
+
+while True:
+    # Try to make a successful status and tweet it
+    try:
+        tweet = make_tweet(input_path)
+        print 'Attempting to tweet: %s' % tweet
+        print
+
+        status = api.PostUpdate(tweet)
+        print 'Successfully tweeted: %s' % status.text
+        print
+
+        user_input = raw_input('Enter to tweet again [q to quit] > ').lower()
+        print
+
+        if user_input == 'q':
+            break
+    except twitter.error.TwitterError:
+        print 'Tweet failed. Making a new tweet...\n'
+        continue
